@@ -76,7 +76,7 @@ The main equation to solve is (8) in Gansner, Koren and North (2005,
     rng::RNG
 end
 
-function Stress(; dim=2,
+@inline_constprop function Stress(; dim=2,
                 Ptype=Float64,
                 iterations=:auto,
                 abstols=0.0,
@@ -84,7 +84,7 @@ function Stress(; dim=2,
                 abstolx=10e-6,
                 uncon_dist=(maxd, N)->maxd*N^(1/3),
                 weights=Array{Float64}(undef, 0, 0),
-                initialpos=[], pin=[],
+                initialpos=(), pin=(),
                 seed=1, rng=DEFAULT_RNG[](seed))
     if !isempty(initialpos)
         dim, Ptype = infer_pointtype(initialpos)
@@ -108,13 +108,12 @@ function Base.iterate(iter::LayoutIterator{<:Stress{Dim,Ptype,IT,FT}}) where {Di
         startpos[k] = v
     end
 
-    if isempty(algo.pin)
-        pin = nothing
-    else
+    if !isempty(algo.pin)
         isbitstype(Ptype) || error("Pin position only available for isbitstype (got $Ptype)!")
-        pin = [get(algo.pin, i, SVector{Dim,Bool}(false for _ in 1:Dim)) for i in 1:N]
-        pin = reinterpret(reshape, Bool, pin)
     end
+    # always an array (unused if nothing is pinned), so the iterator state has a concrete type
+    pin = [get(algo.pin, i, SVector{Dim,Bool}(false for _ in 1:Dim)) for i in 1:N]
+    pin = reinterpret(reshape, Bool, pin)
 
     # calculate iteration if :auto
     maxiter = algo.iterations === :auto ? 400 * N^2 : algo.iterations
@@ -162,7 +161,7 @@ function Base.iterate(iter::LayoutIterator{<:Stress{Dim,Ptype}}, state) where {D
     positions = similar(oldpos)
     mul!(positions, pinvLw, (t * oldpos))
 
-    if !isnothing(pin)
+    if !isempty(algo.pin)
         # on pin positions multiply newpos with zero and add oldpos
         _pos = reinterpret(reshape, Ptype, positions)
         _oldpos = reinterpret(reshape, Ptype, oldpos)
@@ -191,7 +190,7 @@ Input:
 
 See (1) of Reference
 """
-function stress(positions::AbstractArray{Point{T,N}}, d, weights) where {T,N}
+function stress(positions::AbstractArray{Point{N,T}}, d, weights) where {N,T}
     s = zero(T)
     n = length(positions)
     @assert n == size(d, 1) == size(d, 2) == size(weights, 1) == size(weights, 2)

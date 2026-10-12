@@ -25,7 +25,7 @@ This function started as a copy from [IainNZ](https://github.com/IainNZ)'s [Grap
     nlist::Vector{Vector{Int}}
 end
 
-Shell(; Ptype=Float64, nlist=Vector{Int}[]) = Shell{Ptype}(nlist)
+@inline_constprop Shell(; Ptype=Float64, nlist=Vector{Int}[]) = Shell{Ptype}(nlist)
 
 function layout(algo::Shell{Ptype}, adj_matrix::AbstractMatrix) where {Ptype}
     N = assertsquare(adj_matrix)

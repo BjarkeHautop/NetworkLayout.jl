@@ -49,9 +49,9 @@ the nodes.
     rng::RNG
 end
 
-function Spring(; dim=2, Ptype=Float64,
+@inline_constprop function Spring(; dim=2, Ptype=Float64,
                 C=2.0, iterations=100, initialtemp=2.0,
-                initialpos=[], pin=[],
+                initialpos=(), pin=(),
                 seed=1, rng=DEFAULT_RNG[](seed))
     if !isempty(initialpos)
         dim, Ptype = infer_pointtype(initialpos)

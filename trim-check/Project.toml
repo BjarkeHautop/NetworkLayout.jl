@@ -1,0 +1,12 @@
+name = "TrimCheck"
+uuid = "7c4e2a91-5d3b-4f6a-9e81-2b0d6c3f4a17"
+version = "0.0.1"
+
+[deps]
+NetworkLayout = "46757867-2c16-5918-afeb-47bfcb05e46a"
+
+[sources]
+NetworkLayout = {path = ".."}
+
+[compat]
+julia = "1.13"

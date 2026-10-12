@@ -191,6 +191,22 @@ function infer_pointtype(v)
 end
 
 """
+    @inline_constprop function ... end
+
+Mark a keyword constructor `@inline` and `Base.@constprop :aggressive` (only `@inline`
+before Julia 1.7), so that keyword arguments such as `dim` and `Ptype` become
+compile-time constants in the type parameters of the layout. This keeps the
+layouts inferable, which `juliac --trim` needs.
+"""
+macro inline_constprop(ex)
+    if isdefined(Base, Symbol("@constprop"))
+        return esc(:(Base.@constprop :aggressive @inline $ex))
+    else
+        return esc(:(@inline $ex))
+    end
+end
+
+"""
     @addcall
 
 Annotate subtypes of `AbstractLayout` to create a lowercase function call for them.
@@ -224,7 +240,7 @@ macro addcall(expr::Expr)
     fname = Symbol(lowercase(String(name)))
     return quote
         Base.@__doc__ $(esc(expr))
-        Base.@__doc__ $(esc(fname))(g; kwargs...) = layout($name(; kwargs...), g)
+        Base.@__doc__ @inline_constprop $(esc(fname))(g; kwargs...) = layout($name(; kwargs...), g)
     end
 end
 

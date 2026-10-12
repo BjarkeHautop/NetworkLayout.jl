@@ -22,7 +22,7 @@ the nodes.
     nodeweights::Vector{FT}
 end
 
-Spectral(; dim=3, Ptype=Float64, nodeweights=Float64[]) = Spectral{dim,Ptype,eltype(nodeweights)}(nodeweights)
+@inline_constprop Spectral(; dim=3, Ptype=Float64, nodeweights=Float64[]) = Spectral{dim,Ptype,eltype(nodeweights)}(nodeweights)
 
 function make_symmetric(adj_matrix::AbstractMatrix)
     adj_matrix = copy(adj_matrix)
@@ -61,9 +61,11 @@ function layout(algo::Spectral{Dim,Ptype,FT}, adj_matrix::AbstractMatrix) where 
 
     adj_matrix = make_symmetric(adj_matrix)
     L, D = compute_laplacian(adj_matrix, nodeweights)
-    # get the matrix of eigenvectors
-    v = eigen(L, D).vectors
+    # get the matrix of eigenvectors, sorted like `eigen`'s default `sortby`
+    # (which is not --trim=safe compatible)
+    F = eigen(L, D; sortby=nothing)
+    v = F.vectors[:, sortperm(F.values; by=λ -> (real(λ), imag(λ)))]
     # x, y, and z are the 2nd through 4th eigenvectors of the solution to the
     # generalized eigenvalue problem Lv = λDv
-    return map(x -> Point{Dim,Ptype}(x[2:(Dim + 1)]...), eachrow(v))
+    return [Point{Dim,Ptype}(ntuple(d -> v[i, d + 1], Val(Dim))) for i in axes(v, 1)]
 end

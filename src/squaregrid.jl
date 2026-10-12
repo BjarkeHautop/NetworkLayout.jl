@@ -25,7 +25,7 @@ the nodes.
     skip::Vector{Tuple{Int,Int}}
 end
 
-function SquareGrid(; Ptype=Float64, cols=:auto, dx=Ptype(1), dy=Ptype(-1), skip=Tuple{Int,Int}[])
+@inline_constprop function SquareGrid(; Ptype=Float64, cols=:auto, dx=Ptype(1), dy=Ptype(-1), skip=Tuple{Int,Int}[])
     return SquareGrid{Ptype,typeof(cols)}(cols, dx, dy, skip)
 end
 

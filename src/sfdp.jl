@@ -49,10 +49,10 @@ the nodes.
 end
 
 # TODO: check SFDP default parameters
-function SFDP(; dim=2, Ptype=Float64,
+@inline_constprop function SFDP(; dim=2, Ptype=Float64,
               tol=1.0, C=0.2, K=1.0,
               iterations=100,
-              initialpos=[], pin=[],
+              initialpos=(), pin=(),
               seed=1, rng=DEFAULT_RNG[](seed))
     if !isempty(initialpos)
         dim, Ptype = infer_pointtype(initialpos)
